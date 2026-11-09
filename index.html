@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#090a12" />
+  <meta name="description" content="HV AI Studio — واجهة شخصية لتجهيز أوصاف فيديوهات الذكاء الاصطناعي." />
+  <title>HV AI Studio | صانع الفيديو بالذكاء الاصطناعي</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #090a12;
+      --panel: #111321;
+      --panel-2: #171a2b;
+      --line: rgba(255,255,255,.09);
+      --muted: #9da2b8;
+      --text: #f5f5fb;
+      --purple: #9a72ff;
+      --purple-2: #6843e8;
+      --cyan: #66d9e8;
+      --good: #65d6a4;
+      --warning: #f5c66b;
+      --radius: 20px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(ellipse at 85% 0%, rgba(111,75,220,.18), transparent 34%),
+        radial-gradient(ellipse at 0% 30%, rgba(40,157,187,.09), transparent 30%),
+        var(--bg);
+      font-family: Tahoma, Arial, sans-serif;
+      line-height: 1.6;
+    }
+    button, textarea { font: inherit; }
+    button { cursor: pointer; }
+    .wrap { width: min(1180px, calc(100% - 32px)); margin: 0 auto; }
+    header {
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 18px; padding: 22px 0; border-bottom: 1px solid var(--line);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-mark {
+      width: 43px; height: 43px; display: grid; place-items: center;
+      border-radius: 14px; color: white; font-weight: 900; font-size: 19px;
+      background: linear-gradient(135deg, #9c78ff, #5736d3);
+      box-shadow: 0 8px 28px rgba(116,77,230,.28);
+    }
+    .brand-name { font-size: 17px; font-weight: 800; letter-spacing: .2px; }
+    .brand-sub { color: var(--muted); font-size: 11px; margin-top: -2px; }
+    .local-tag {
+      color: #c9baff; border: 1px solid rgba(154,114,255,.28);
+      background: rgba(154,114,255,.08); padding: 7px 12px; border-radius: 99px;
+      font-size: 12px; white-space: nowrap;
+    }
+    .hero { padding: 42px 0 28px; text-align: center; }
+    .eyebrow { color: #b9a7ff; font-size: 12px; font-weight: 700; letter-spacing: .5px; }
+    h1 { font-size: clamp(29px, 5vw, 48px); line-height: 1.2; margin: 12px 0; }
+    h1 span { color: #b29aff; }
+    .hero p { color: var(--muted); max-width: 650px; margin: 0 auto; font-size: 15px; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(300px, .85fr); gap: 18px; padding-bottom: 28px; }
+    .panel {
+      background: linear-gradient(160deg, rgba(23,26,43,.96), rgba(15,17,29,.96));
+      border: 1px solid var(--line); border-radius: var(--radius);
+      box-shadow: 0 18px 55px rgba(0,0,0,.18);
+    }
+    .panel-head { padding: 20px 22px 0; display:flex; justify-content:space-between; gap:12px; align-items:center; }
+    .panel-title { margin: 0; font-size: 16px; font-weight: 800; }
+    .step { color: #b6a2ff; font-size: 11px; border: 1px solid rgba(154,114,255,.25); padding: 4px 9px; border-radius: 99px; }
+    .panel-body { padding: 18px 22px 22px; }
+    .field-label { display:block; font-size: 13px; font-weight: 700; margin-bottom: 9px; }
+    .hint { font-weight: 400; color: var(--muted); font-size: 11px; }
+    textarea {
+      display:block; width:100%; min-height:170px; resize:vertical;
+      color:var(--text); background:#0b0d18; border:1px solid rgba(255,255,255,.11);
+      border-radius:14px; padding:15px; outline:none; line-height:1.8;
+    }
+    textarea:focus { border-color: rgba(154,114,255,.75); box-shadow:0 0 0 3px rgba(154,114,255,.1); }
+    textarea::placeholder { color:#70758d; }
+    .under-text { display:flex; justify-content:space-between; gap:10px; margin-top:8px; color:var(--muted); font-size:11px; }
+    .quick-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+    .chip, .choice {
+      color:#c8cbe0; border:1px solid var(--line); background:rgba(255,255,255,.025);
+      border-radius:99px; padding:7px 11px; font-size:11px;
+    }
+    .chip:hover, .choice:hover { border-color:rgba(154,114,255,.5); color:white; }
+    .settings { display:grid; grid-template-columns:1fr 1fr; gap:17px 14px; }
+    .setting { min-width:0; }
+    .choices { display:flex; flex-wrap:wrap; gap:7px; }
+    .choice[aria-pressed="true"] {
+      color:white; border-color:rgba(154,114,255,.8);
+      background:rgba(121,85,228,.22); box-shadow:inset 0 0 0 1px rgba(154,114,255,.12);
+    }
+    .wide { grid-column:1 / -1; }
+    .generate {
+      display:flex; align-items:center; justify-content:center; gap:9px; width:100%;
+      border:0; border-radius:14px; padding:14px 18px; color:white; font-weight:800;
+      background:linear-gradient(100deg, #7854e8, #9b70ff); box-shadow:0 10px 25px rgba(116,77,230,.23);
+      transition:transform .15s ease, filter .15s ease;
+    }
+    .generate:hover { filter:brightness(1.08); transform:translateY(-1px); }
+    .generate:active { transform:translateY(0); }
+    .notice {
+      margin-top:12px; padding:11px 13px; border-radius:12px;
+      color:#e9d7a7; background:rgba(245,198,107,.07);
+      border:1px solid rgba(245,198,107,.17); font-size:11px;
+    }
+    .notice strong { color:#ffdda0; }
+    .preview { min-height:100%; display:flex; flex-direction:column; }
+    .preview-screen {
+      position:relative; overflow:hidden; min-height:310px; flex:1; margin:18px;
+      display:grid; place-items:center; border:1px dashed rgba(176,157,255,.27);
+      border-radius:17px; text-align:center;
+      background:
+        radial-gradient(ellipse at 50% 35%, rgba(123,91,220,.2), transparent 48%),
+        linear-gradient(145deg, #111526, #0c0e19);
+    }
+    .preview-screen::before, .preview-screen::after {
+      content:""; position:absolute; width:170px; height:170px; border-radius:50%;
+      border:1px solid rgba(166,143,255,.09); pointer-events:none;
+    }
+    .preview-screen::after { width:240px; height:240px; }
+    .preview-content { position:relative; z-index:1; padding:25px; }
+    .play-icon {
+      margin:0 auto 15px; width:55px; height:55px; display:grid; place-items:center;
+      border-radius:50%; color:#d3c5ff; background:rgba(154,114,255,.13);
+      border:1px solid rgba(154,114,255,.25); font-size:20px;
+    }
+    .preview-content h3 { margin:0 0 5px; font-size:15px; }
+    .preview-content p { margin:0; color:var(--muted); font-size:11px; max-width:230px; }
+    .preview-meta { display:flex; flex-wrap:wrap; gap:8px; padding:0 18px 18px; }
+    .meta-pill { color:#aeb3c9; background:rgba(255,255,255,.04); border:1px solid var(--line); border-radius:9px; padding:6px 9px; font-size:10px; }
+    .status { display:none; margin:0 18px 18px; border-radius:11px; padding:11px 12px; font-size:12px; }
+    .status.show { display:block; }
+    .status.info { color:#d8ceff; background:rgba(154,114,255,.09); border:1px solid rgba(154,114,255,.2); }
+    .status.error { color:#ffd0d0; background:rgba(255,100,100,.08); border:1px solid rgba(255,100,100,.2); }
+    footer { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:18px 0 30px; border-top:1px solid var(--line); color:#777d94; font-size:11px; }
+    .footer-note { color:#a4a8bb; }
+    @media (max-width: 800px) {
+      .layout { grid-template-columns:1fr; }
+      .preview-screen { min-height:260px; }
+      .hero { padding-top:32px; }
+    }
+    @media (max-width: 480px) {
+      .wrap { width:min(100% - 22px, 1180px); }
+      header { padding:15px 0; }
+      .local-tag { font-size:10px; padding:6px 8px; }
+      .panel-head { padding:17px 16px 0; }
+      .panel-body { padding:16px; }
+      .settings { gap:15px 10px; }
+      .choice { padding:7px 9px; }
+      .preview-screen { margin:14px; }
+      .preview-meta { padding:0 14px 14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="brand-mark">HV</div>
+        <div>
+          <div class="brand-name">HV AI Studio</div>
+          <div class="brand-sub">استوديو صناعة الفيديو بالذكاء الاصطناعي</div>
+        </div>
+      </div>
+      <div class="local-tag">نسخة تجريبية · استخدام شخصي</div>
+    </header>
+
+    <section class="hero">
+      <div class="eyebrow">حوّل أفكارك إلى مشاهد</div>
+      <h1>اصنع فيديوك القادم <span>بالذكاء الاصطناعي</span></h1>
+      <p>اكتب وصف المشهد، اختر المدة والأسلوب والمقاس، وجهّز طلب الفيديو من مكان واحد.</p>
+    </section>
+
+    <main class="layout">
+      <section class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">أنشئ فيديو جديد</h2>
+          <span class="step">الخطوة 01</span>
+        </div>
+        <div class="panel-body">
+          <label class="field-label" for="prompt">وصف الفيديو <span class="hint">(اكتب تفاصيل المشهد والحركة)</span></label>
+          <textarea id="prompt" maxlength="1500" placeholder="مثال: لقطة سينمائية لمدينة مستقبلية وقت الغروب، سيارات طائرة تمر بين ناطحات السحاب، حركة كاميرا بطيئة، إضاءة واقعية وتفاصيل دقيقة..." aria-describedby="promptHelp"></textarea>
+          <div class="under-text"><span id="promptHelp">كلما كان الوصف محددًا، كانت النتيجة المتوقعة أوضح.</span><span><b id="count">0</b> / 1500</span></div>
+          <div class="quick-row">
+            <button class="chip" type="button" id="sampleBtn">استخدم وصفًا تجريبيًا</button>
+            <button class="chip" type="button" id="clearBtn">مسح النص</button>
+            <button class="chip" type="button" id="copyBtn">نسخ الوصف</button>
+          </div>
+          <div style="height:1px;background:var(--line);margin:20px 0"></div>
+          <div class="settings">
+            <div class="setting">
+              <span class="field-label">مدة الفيديو</span>
+              <div class="choices" data-group="duration">
+                <button class="choice" type="button" data-value="15 ثانية" aria-pressed="true">15 ثانية</button>
+                <button class="choice" type="button" data-value="20 ثانية" aria-pressed="false">20 ثانية</button>
+                <button class="choice" type="button" data-value="30 ثانية" aria-pressed="false">30 ثانية</button>
+              </div>
+            </div>
+            <div class="setting">
+              <span class="field-label">مقاس الفيديو</span>
+              <div class="choices" data-group="ratio">
+                <button class="choice" type="button" data-value="9:16 عمودي" aria-pressed="true">9:16 عمودي</button>
+                <button class="choice" type="button" data-value="16:9 أفقي" aria-pressed="false">16:9 أفقي</button>
+                <button class="choice" type="button" data-value="1:1 مربع" aria-pressed="false">1:1 مربع</button>
+              </div>
+            </div>
+            <div class="setting wide">
+              <span class="field-label">أسلوب الفيديو</span>
+              <div class="choices" data-group="style">
+                <button class="choice" type="button" data-value="واقعي سينمائي" aria-pressed="true">واقعي سينمائي</button>
+                <button class="choice" type="button" data-value="أنمي" aria-pressed="false">أنمي</button>
+                <button class="choice" type="button" data-value="ثلاثي الأبعاد" aria-pressed="false">3D</button>
+                <button class="choice" type="button" data-value="كرتوني" aria-pressed="false">كرتوني</button>
+                <button class="choice" type="button" data-value="خيال علمي" aria-pressed="false">خيال علمي</button>
+              </div>
+            </div>
+            <div class="wide">
+              <button class="generate" id="generateBtn" type="button"><span>✦</span> تجهيز طلب الفيديو</button>
+              <div class="notice"><strong>تنبيه:</strong> هذه النسخة هي واجهة الموقع فقط. لم يتم ربط محرك توليد فيديو بعد، لذلك لن يتم إنشاء فيديو حقيقي عند الضغط على الزر.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel preview">
+        <div class="panel-head">
+          <h2 class="panel-title">معاينة الفيديو</h2>
+          <span class="step">Preview</span>
+        </div>
+        <div class="preview-screen">
+          <div class="preview-content">
+            <div class="play-icon">▶</div>
+            <h3>مساحة معاينة الفيديو</h3>
+            <p>بعد ربط محرك الذكاء الاصطناعي، سيظهر الفيديو الناتج هنا.</p>
+          </div>
+        </div>
+        <div class="preview-meta">
+          <span class="meta-pill" id="durationMeta">المدة: 15 ثانية</span>
+          <span class="meta-pill" id="ratioMeta">المقاس: 9:16 عمودي</span>
+          <span class="meta-pill" id="styleMeta">الأسلوب: واقعي سينمائي</span>
+        </div>
+        <div class="status" id="status" role="status" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <footer>
+      <span>© 2026 HV AI Studio</span>
+      <span class="footer-note">واجهة تجريبية — لا تضع مفاتيح API أو كلمات مرور في هذا المستودع.</span>
+    </footer>
+  </div>
+
+  <script>
+    const promptBox = document.getElementById('prompt');
+    const count = document.getElementById('count');
+    const statusBox = document.getElementById('status');
+    const selections = { duration: '15 ثانية', ratio: '9:16 عمودي', style: 'واقعي سينمائي' };
+
+    promptBox.addEventListener('input', () => { count.textContent = promptBox.value.length; });
+
+    document.querySelectorAll('.choices').forEach(group => {
+      group.addEventListener('click', event => {
+        const button = event.target.closest('button[data-value]');
+        if (!button) return;
+        group.querySelectorAll('button').forEach(item => item.setAttribute('aria-pressed', 'false'));
+        button.setAttribute('aria-pressed', 'true');
+        const key = group.dataset.group;
+        selections[key] = button.dataset.value;
+        const labels = { duration: 'المدة: ', ratio: 'المقاس: ', style: 'الأسلوب: ' };
+        const ids = { duration: 'durationMeta', ratio: 'ratioMeta', style: 'styleMeta' };
+        document.getElementById(ids[key]).textContent = labels[key] + selections[key];
+      });
+    });
+
+    document.getElementById('sampleBtn').addEventListener('click', () => {
+      promptBox.value = 'لقطة سينمائية واقعية لمدينة مستقبلية عند الغروب، ناطحات سحاب زجاجية تعكس ألوان السماء، مركبات طائرة تتحرك بهدوء بين المباني، حركة كاميرا بطيئة إلى الأمام، إضاءة ذهبية وتفاصيل عالية.';
+      promptBox.dispatchEvent(new Event('input'));
+      showStatus('تم وضع وصف تجريبي. يمكنك تعديله قبل تجهيز الطلب.', 'info');
+    });
+
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      promptBox.value = '';
+      promptBox.dispatchEvent(new Event('input'));
+      hideStatus();
+      promptBox.focus();
+    });
+
+    document.getElementById('copyBtn').addEventListener('click', async () => {
+      if (!promptBox.value.trim()) return showStatus('اكتب وصف الفيديو أولًا حتى تتمكن من نسخه.', 'error');
+      try {
+        await navigator.clipboard.writeText(promptBox.value);
+        showStatus('تم نسخ وصف الفيديو.', 'info');
+      } catch (error) {
+        promptBox.select();
+        showStatus('تعذر النسخ التلقائي. تم تحديد النص؛ انسخه يدويًا.', 'info');
+      }
+    });
+
+    document.getElementById('generateBtn').addEventListener('click', () => {
+      if (!promptBox.value.trim()) return showStatus('اكتب وصفًا للفيديو أولًا.', 'error');
+      showStatus('تم تجهيز اختياراتك في الواجهة، لكن محرك توليد الفيديو غير مربوط بعد. الخطوة القادمة هي ربط خدمة توليد حقيقية.', 'info');
+    });
+
+    function showStatus(message, type) {
+      statusBox.textContent = message;
+      statusBox.className = 'status show ' + type;
+    }
+    function hideStatus() { statusBox.textContent = ''; statusBox.className = 'status'; }
+  </script>
+</body>
+</html>
