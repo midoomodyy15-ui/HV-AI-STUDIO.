@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#090a12" />
-  <meta name="description" content="HV AI Studio — واجهة شخصية لتجهيز أوصاف فيديوهات الذكاء الاصطناعي." />
+  <meta name="description" content="HV AI Studio — واجهة شخصية لتوليد مقاطع فيديو بالذكاء الاصطناعي." />
   <title>HV AI Studio | صانع الفيديو بالذكاء الاصطناعي</title>
   <style>
     :root {
@@ -136,6 +136,8 @@
     .status.show { display:block; }
     .status.info { color:#d8ceff; background:rgba(154,114,255,.09); border:1px solid rgba(154,114,255,.2); }
     .status.error { color:#ffd0d0; background:rgba(255,100,100,.08); border:1px solid rgba(255,100,100,.2); }
+    .generate:disabled { opacity:.65; cursor:wait; transform:none; }
+    #downloadVideo { color:#e9ddff !important; text-decoration:none; border:1px solid rgba(154,114,255,.4); padding:10px 16px; border-radius:12px; }
     footer { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:18px 0 30px; border-top:1px solid var(--line); color:#777d94; font-size:11px; }
     .footer-note { color:#a4a8bb; }
     @media (max-width: 800px) {
@@ -219,8 +221,9 @@
               </div>
             </div>
             <div class="wide">
-              <button class="generate" id="generateBtn" type="button"><span>✦</span> تجهيز طلب الفيديو</button>
-              <div class="notice"><strong>تنبيه:</strong> هذه النسخة هي واجهة الموقع فقط. لم يتم ربط محرك توليد فيديو بعد، لذلك لن يتم إنشاء فيديو حقيقي عند الضغط على الزر.</div>
+              <button class="generate" id="generateBtn" type="button"><span>✦</span> إنشاء مقطع فيديو تجريبي</button>
+              <div class="status" id="actionStatus" role="status" aria-live="polite"></div>
+              <div class="notice"><strong>تنبيه مهم:</strong> تم ربط محرك LTX التجريبي. الاختبار الأول ينشئ مقطعًا قصيرًا مدته ثانيتان فقط للتأكد من الاتصال. اختيارات 15 و20 و30 ثانية هي مدة المشروع المستهدفة، ولم يتم بعد دمج عدة مقاطع للوصول إليها. الحد الأقصى للمقطع الواحد في المحرك الحالي 8.5 ثانية.</div>
             </div>
           </div>
         </div>
@@ -231,12 +234,16 @@
           <h2 class="panel-title">معاينة الفيديو</h2>
           <span class="step">Preview</span>
         </div>
-        <div class="preview-screen">
-          <div class="preview-content">
+        <div class="preview-screen" id="previewScreen">
+          <div class="preview-content" id="previewPlaceholder">
             <div class="play-icon">▶</div>
             <h3>مساحة معاينة الفيديو</h3>
-            <p>بعد ربط محرك الذكاء الاصطناعي، سيظهر الفيديو الناتج هنا.</p>
+            <p>سيظهر المقطع الناتج هنا بعد اكتمال التوليد.</p>
           </div>
+          <video id="generatedVideo" controls playsinline hidden style="display:none;width:100%;height:auto;max-height:560px;border-radius:14px;background:#000"></video>
+        </div>
+        <div style="padding:0 18px 18px;text-align:center">
+          <a id="downloadVideo" href="#" download="hv-ai-studio-video.mp4" hidden style="display:none" class="chip">تنزيل الفيديو MP4</a>
         </div>
         <div class="preview-meta">
           <span class="meta-pill" id="durationMeta">المدة: 15 ثانية</span>
@@ -253,10 +260,19 @@
     </footer>
   </div>
 
-  <script>
+  <script type="module">
+    import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client@2.7.1/dist/index.min.js";
+
+    const SPACE_ID = "DeepRat/LTX-Video-ZeroGPU-Optimized";
+    const SPACE_ORIGIN = "https://deeprat-ltx-video-zerogpu-optimized.hf.space";
     const promptBox = document.getElementById('prompt');
     const count = document.getElementById('count');
     const statusBox = document.getElementById('status');
+    const actionStatus = document.getElementById('actionStatus');
+    const generateBtn = document.getElementById('generateBtn');
+    const generatedVideo = document.getElementById('generatedVideo');
+    const previewPlaceholder = document.getElementById('previewPlaceholder');
+    const downloadVideo = document.getElementById('downloadVideo');
     const selections = { duration: '15 ثانية', ratio: '9:16 عمودي', style: 'واقعي سينمائي' };
 
     promptBox.addEventListener('input', () => { count.textContent = promptBox.value.length; });
@@ -276,9 +292,9 @@
     });
 
     document.getElementById('sampleBtn').addEventListener('click', () => {
-      promptBox.value = 'لقطة سينمائية واقعية لمدينة مستقبلية عند الغروب، ناطحات سحاب زجاجية تعكس ألوان السماء، مركبات طائرة تتحرك بهدوء بين المباني، حركة كاميرا بطيئة إلى الأمام، إضاءة ذهبية وتفاصيل عالية.';
+      promptBox.value = 'A cinematic realistic view of a futuristic city at sunset, glass skyscrapers reflecting golden light, flying vehicles moving smoothly between buildings, a slow forward camera movement, detailed atmosphere.';
       promptBox.dispatchEvent(new Event('input'));
-      showStatus('تم وضع وصف تجريبي. يمكنك تعديله قبل تجهيز الطلب.', 'info');
+      showStatus('تم وضع وصف تجريبي باللغة الإنجليزية؛ عادةً تكون الأوصاف الإنجليزية أنسب لاختبار هذا النموذج.', 'info');
     });
 
     document.getElementById('clearBtn').addEventListener('click', () => {
@@ -299,16 +315,121 @@
       }
     });
 
-    document.getElementById('generateBtn').addEventListener('click', () => {
-      if (!promptBox.value.trim()) return showStatus('اكتب وصفًا للفيديو أولًا.', 'error');
-      showStatus('تم تجهيز اختياراتك في الواجهة، لكن محرك توليد الفيديو غير مربوط بعد. الخطوة القادمة هي ربط خدمة توليد حقيقية.', 'info');
-    });
+    function getDimensions(ratio) {
+      if (ratio.startsWith('16:9')) return { height: 288, width: 512 };
+      if (ratio.startsWith('1:1')) return { height: 384, width: 384 };
+      return { height: 512, width: 288 };
+    }
+
+    function getVideoUrl(value) {
+      if (!value) return null;
+      if (typeof value === 'string') {
+        if (/^https?:\/\//i.test(value)) return value;
+        if (value.startsWith('/file=') || value.startsWith('/gradio_api/file=')) return SPACE_ORIGIN + value;
+        return null;
+      }
+      if (Array.isArray(value)) {
+        for (const item of value) { const found = getVideoUrl(item); if (found) return found; }
+        return null;
+      }
+      if (typeof value === 'object') {
+        for (const key of ['video', 'url', 'path', 'data', 'file']) {
+          if (value[key]) { const found = getVideoUrl(value[key]); if (found) return found; }
+        }
+      }
+      return null;
+    }
+
+    function styleDescription(style) {
+      const styles = {
+        'واقعي سينمائي': 'photorealistic cinematic style, natural lighting, realistic textures',
+        'أنمي': 'high-quality Japanese anime style, expressive animation, detailed backgrounds',
+        'ثلاثي الأبعاد': 'high-quality 3D animated style, detailed rendering, dimensional lighting',
+        'كرتوني': 'colorful cartoon animation style, clean shapes, expressive movement',
+        'خيال علمي': 'science fiction visual style, futuristic atmosphere, cinematic lighting'
+      };
+      return styles[style] || 'cinematic visual style';
+    }
+
+    generateBtn.addEventListener('click', createTestVideo);
+
+    async function createTestVideo() {
+      const prompt = promptBox.value.trim();
+      if (!prompt) return showStatus('اكتب وصف الفيديو أولًا.', 'error');
+
+      generateBtn.disabled = true;
+      generateBtn.textContent = 'جاري الاتصال بالمحرك وإنشاء المقطع...';
+      downloadVideo.hidden = true;
+      downloadVideo.style.display = 'none';
+      showStatus('جاري الاتصال بمحرك LTX. قد تظهر طوابير انتظار، وقد يستغرق إنشاء المقطع عدة دقائق.', 'info');
+
+      try {
+        const app = await Client.connect(SPACE_ID, {
+          status_callback: (status) => {
+            if (status && status.status === '睡眠中') {
+              showStatus('يجري إيقاظ المحرك، انتظر قليلًا...', 'info');
+            }
+          }
+        });
+
+        const dims = getDimensions(selections.ratio);
+        const promptWithStyle = prompt + ', ' + styleDescription(selections.style);
+        // اختبار الاتصال الأول: نطلب مقطعًا مدته ثانيتان فقط لتقليل استهلاك GPU.
+        // ترتيب القيم مطابق لقائمة t2v_inputs في Space الرسمي.
+        const result = await app.predict('/text_to_video', [
+          promptWithStyle,
+          'worst quality, inconsistent motion, blurry, jittery, distorted',
+          null,
+          null,
+          dims.height,
+          dims.width,
+          'text-to-video',
+          2.0,
+          9,
+          42,
+          true,
+          1.0,
+          false,
+          false
+        ]);
+
+        const videoUrl = getVideoUrl(result && result.data ? result.data[0] : null);
+        if (!videoUrl) {
+          console.error('Unexpected Gradio result:', result);
+          throw new Error('وصل رد من المحرك، لكن لم أتمكن من استخراج رابط الفيديو. أرسل لقطة شاشة ورسالة النتيجة للمراجعة.');
+        }
+
+        generatedVideo.src = videoUrl;
+        generatedVideo.hidden = false;
+        generatedVideo.style.display = 'block';
+        previewPlaceholder.hidden = true;
+        previewPlaceholder.style.display = 'none';
+        downloadVideo.href = videoUrl;
+        downloadVideo.hidden = false;
+        downloadVideo.style.display = 'inline-flex';
+        showStatus('نجح الاتصال وتم إنشاء مقطع تجريبي مدته نحو ثانيتين. اختيار ' + selections.duration + ' هو مدة المشروع المستهدفة، وليس مدة هذا الاختبار.', 'info');
+      } catch (error) {
+        console.error(error);
+        const message = (error && error.message) ? error.message : String(error);
+        showStatus('تعذر إنشاء المقطع. السبب المحتمل: انتهاء الحصة المجانية، ازدحام الطابور، توقف Space مؤقتًا، أو مشكلة اتصال. التفاصيل: ' + message, 'error');
+      } finally {
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = '<span>✦</span> إعادة إنشاء مقطع تجريبي';
+      }
+    }
 
     function showStatus(message, type) {
       statusBox.textContent = message;
       statusBox.className = 'status show ' + type;
+      if (actionStatus) {
+        actionStatus.textContent = message;
+        actionStatus.className = 'status show ' + type;
+      }
     }
-    function hideStatus() { statusBox.textContent = ''; statusBox.className = 'status'; }
+    function hideStatus() {
+      statusBox.textContent = ''; statusBox.className = 'status';
+      if (actionStatus) { actionStatus.textContent = ''; actionStatus.className = 'status'; }
+    }
   </script>
 </body>
 </html>
